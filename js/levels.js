@@ -25,6 +25,7 @@ const LEVELS = [
       <p>Every webpage is made of <strong>HTML tags</strong>. They look like this:</p>
       <pre style="background:#0a0c10;padding:10px;border-radius:6px;font-size:0.82em;color:#e2e8f8;margin:8px 0">&lt;h1&gt;Your text here&lt;/h1&gt;</pre>
       <p>The <code>&lt;h1&gt;</code> tag makes a big bold heading — perfect for your name.</p>
+      <p style="color: #34d399; font-size: 0.85em;"><em>✨ Tip: Your progress is saved automatically in your browser as you pass each level!</em></p>
       <p><strong>Task:</strong> Type <code>&lt;h1&gt;</code>, write your name, then close it with <code>&lt;/h1&gt;</code>.</p>
     `,
     hint: `<h1>Your Name</h1>`,
@@ -1038,5 +1039,6 @@ const STATE = {
 </html>`,
   css: `* { box-sizing: border-box; margin: 0; padding: 0; }\nbody { background-color: #0d1117; color: #e6edf3; font-family: sans-serif; line-height: 1.7; }`,
   js: `console.log("Portfolio loading...");`,
+  userName: 'Your Name',
   completedLevels: []
 };

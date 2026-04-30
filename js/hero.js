@@ -14,9 +14,9 @@
       <span id="hero-glitch-text">initializing...</span><span id="hero-blink">█</span>
     </div>
     <div id="hero-content">
-      <div id="hero-kicker">24 LEVELS · NO ACCOUNT NEEDED</div>
+      <div id="hero-kicker">24 LEVELS · PROGRESS SAVES AUTOMATICALLY</div>
       <h1 id="hero-title">Code<span class="accent">Quest</span></h1>
-      <p id="hero-sub">Build real websites from scratch.<br>Master HTML, CSS and JavaScript, one level at a time.</p>
+      <p id="hero-sub">Build real websites from scratch. No account needed—your progress saves directly to your browser!</p>
       <div id="hero-tracks">
         <div class="hero-track"><span class="hero-track-icon">🏗️</span>HTML · Levels 1-7</div>
         <div class="hero-track"><span class="hero-track-icon">🎨</span>CSS · Levels 8-14</div>

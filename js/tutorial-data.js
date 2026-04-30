@@ -6,50 +6,41 @@
   window.CODEQUEST_TUTORIAL_STEPS = [
     {
       selector: '#homeBtn',
-      text: 'This is the home button. Tap it anytime to return to the start screen.'
+      text: 'This is the Home button. Use it to go back to the start screen whenever you want.'
     },
     {
       selector: '#musicToggleBtn',
-      text: 'This music button mutes or unmutes the lofi stream while you code.'
+      text: 'Need some music? This button turns the Lo-Fi beats on or off while you code.'
     },
     {
       selector: '#ttsToggleBtn',
-      text: 'This is the mentor voice button. Use it to mute or unmute text to speech guidance any time.'
+      text: 'This is your Mentor Voice button. You can mute or unmute your guide here.'
     },
     {
       selector: '#level-pill',
-      text: 'This shows your current level so you always know your progress through the game.'
-    },
-    {
-      selector: '#cq-points-badge',
-      text: 'This is your hint points badge in the top right. You spend these points to unlock hints when you get stuck, and you can earn more as you progress.'
+      text: 'This shows your current level. You are on a journey through 24 levels!'
     },
     {
       selector: '#xp-badge',
-      text: 'This is your XP badge in the top right. It grows when you complete levels and shows how far you have progressed overall.'
+      text: 'These are your XP stars! You earn them by finishing levels. Watch them grow as you learn!'
     },
     {
       selector: '#instructions-panel',
-      text: 'Read this panel first. It tells you exactly what to build, and the hint points in the top bar are what you spend to unlock help when you get stuck.',
-      code: `<!-- Example: add a button that shows an alert -->
-<button id="hello">Click me</button>
-<script>
-  document.getElementById('hello').addEventListener('click', function(){
-    alert('Hello!');
-  });
-</script>`
+      text: 'Always read this part first! It tells you exactly what to do for each level.',
+      code: `<!-- Example: Making a button -->
+<button>Click me!</button>`
     },
     {
       selector: '#editor-wrap',
-      text: 'This is your coding box. Write your HTML, CSS, or JavaScript here.'
+      text: 'This is your workspace. This is where you will type your real website code!'
     },
     {
       selector: '#action-row',
-      text: 'Use Back and Next to navigate levels, and Run Code to check your solution.'
+      text: 'Click "Run Code" to see if your answer is correct. Use the arrows to move between levels.'
     },
     {
       selector: '#preview-pane',
-      text: 'This preview updates your website output so you can see your code live.'
+      text: 'This is your live website! You can see your changes appear here instantly.'
     }
   ];
 })();
