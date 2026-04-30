@@ -426,7 +426,7 @@
     /* Subtitle */
     var sub = document.createElement('p');
     sub.id = 'cq-login-sub';
-    sub.textContent = 'Sign in to save your progress';
+    sub.textContent = 'Sign in to keep your progress safe or switch accounts.';
 
     /* Tabs */
     var tabs = document.createElement('div');
@@ -544,7 +544,7 @@
     /* Note */
     var note = document.createElement('p');
     note.id = 'cq-login-note';
-    note.textContent = 'Use your assigned username and password.';
+    note.textContent = 'Progress is automatically saved to this browser. Signing in lets you save it to your own account!';
 
     card.appendChild(close);
     card.appendChild(logo);

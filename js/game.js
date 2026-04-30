@@ -291,6 +291,7 @@
       localStorage.setItem('codequest_v2', JSON.stringify({
         currentLevel, totalXP,
         completedLevels: STATE.completedLevels,
+        userName: STATE.userName,
         html: STATE.html, css: STATE.css, js: STATE.js
       }));
     } catch(e) {}
@@ -304,6 +305,7 @@
       currentLevel = Math.min(d.currentLevel || 0, LEVELS.length - 1);
       totalXP = d.totalXP || 0;
       STATE.completedLevels = d.completedLevels || [];
+      if (d.userName) STATE.userName = d.userName;
       if (d.html) STATE.html = d.html;
       if (d.css)  STATE.css  = d.css;
       if (d.js)   STATE.js   = d.js;
@@ -391,9 +393,10 @@
     const badgeMap = { HTML: 'badge-html', CSS: 'badge-css', JS: 'badge-js' };
     el.chapterBadge.className = badgeMap[level.chapter];
     el.chapterBadge.textContent = level.chapter + ' · Level ' + level.id;
-
-    el.levelTitle.textContent = level.title;
-    el.instructions.innerHTML = level.instructions;
+    
+    const userName = STATE.userName || 'Your Name';
+    el.levelTitle.textContent = level.title.replace(/Your Name/g, userName);
+    el.instructions.innerHTML = level.instructions.replace(/Your Name/g, userName);
     el.editorFilename.textContent = level.filename;
 
     // NEW TASK 2: Inject Speak button below instructions
@@ -404,13 +407,33 @@
 
     // Hint reset — hints.js manages button label and copy button
     el.hintText.classList.add('hidden');
-    el.hintText.textContent = level.hint || '';
+    el.hintText.textContent = (level.hint || '').replace(/Your Name/g, userName);
     if (window.CQ_HINTS && window.CQ_HINTS.resetHintUI) {
       window.CQ_HINTS.resetHintUI();
     }
 
     // Editor
-    el.codeInput.value = level.starterCode || '';
+    let starter = (level.starterCode || '').replace(/Your Name/g, userName);
+    // If we're building on the same file, use the actual progress from previous levels
+    if (idx > 0) {
+      const prev = LEVELS[idx - 1];
+      if (prev.filename === level.filename && STATE.completedLevels.includes(prev.id)) {
+        // Use the accumulated state for this chapter instead of hardcoded starter
+        // (Level 7 is an exception as it requires a fresh start for the full HTML shell)
+        if (level.id !== 7) {
+          if (level.chapter === 'HTML') starter = STATE.html;
+          if (level.chapter === 'CSS')  starter = STATE.css;
+          if (level.chapter === 'JS')   starter = STATE.js;
+
+          // Keep any helpful guiding comments from the original starter code
+          const comment = (level.starterCode || '').match(/<!--[\s\S]*?-->|\/\*[\s\S]*?\*\/|\/\/.*$/m);
+          if (comment && !starter.includes(comment[0])) {
+            starter = starter.trim() + '\n\n' + comment[0];
+          }
+        }
+      }
+    }
+    el.codeInput.value = starter;
     if (window.editorUpdateLineNumbers) window.editorUpdateLineNumbers();
 
     // Feedback reset
@@ -566,6 +589,13 @@ footer{background:#0d1117;border-top:1px solid #21262d;text-align:center;padding
       // Persist code into shared state
       if (level.chapter === 'HTML') {
         STATE.html = code;
+        // Extraction of user name from level 1 h1
+        if (level.id === 1) {
+          const match = code.match(/<h1[^>]*>([^<]+)<\/h1>/i);
+          if (match && match[1]) {
+            STATE.userName = match[1].trim();
+          }
+        }
       } else if (level.chapter === 'CSS') {
         STATE.css = (STATE.css + '\n' + code).trim();
       } else {
