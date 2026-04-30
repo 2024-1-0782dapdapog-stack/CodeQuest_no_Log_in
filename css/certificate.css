@@ -1,0 +1,23 @@
+#cq-cert-actions {
+  display: grid;
+  gap: 10px;
+  margin: 14px 0 12px;
+}
+
+#cq-download-cert-btn,
+#cq-download-files-btn {
+  border: 1px solid rgba(56,189,248,0.38);
+  background: rgba(56,189,248,0.1);
+  color: #c8f4ff;
+  font-weight: 700;
+  border-radius: 10px;
+  padding: 10px 14px;
+  cursor: pointer;
+  transition: transform 0.18s ease, background 0.18s ease;
+}
+
+#cq-download-cert-btn:hover,
+#cq-download-files-btn:hover {
+  transform: translateY(-1px);
+  background: rgba(56,189,248,0.16);
+}

@@ -1,0 +1,322 @@
+/* ============================================================
+   CODEQUEST – ENHANCEMENTS  (NEW FILE: css/enhancements.css)
+   
+   Tasks covered:
+     Task 2  – Hero→App scroll transition styles
+     Task 3  – Parallax depth layer
+     Task 4  – Orbital tab selector  
+     Task 5  – Left panel polish
+   
+   All rules are additive. Nothing overrides core layout logic.
+   ============================================================ */
+
+/* ══════════════════════════════════════════════════════════════
+   TASK 2 – HERO → APP TRANSITION STATES
+   ══════════════════════════════════════════════════════════════ */
+
+/* NEW: Hero exit animation class (added by enhancements.js) */
+#cq-hero.cq-hero-exit {
+  animation: cqHeroExit 0.55s cubic-bezier(0.4, 0, 0.2, 1) forwards !important;
+  pointer-events: none;
+}
+
+@keyframes cqHeroExit {
+  from { opacity: 1; transform: scale(1)   translateY(0); }
+  to   { opacity: 0; transform: scale(1.05) translateY(-28px); }
+}
+
+/* NEW: App section entrance */
+#app.cq-app-entering {
+  animation: cqAppEnter 0.55s 0.15s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@keyframes cqAppEnter {
+  from { opacity: 0; transform: translateY(20px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* NEW: Splash fade-in when app shows directly */
+#splash.cq-splash-enter {
+  animation: cqSplashEnter 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@keyframes cqSplashEnter {
+  from { opacity: 0; transform: translateY(14px) scale(0.98); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+
+/* ══════════════════════════════════════════════════════════════
+   TASK 3 – PARALLAX / DEPTH LAYER
+   ══════════════════════════════════════════════════════════════ */
+
+/* NEW: Subtle depth layer behind the whole app (mouse-tracked) */
+#cq-depth-layer {
+  position: fixed;
+  inset: -40px;                 /* oversized so shift never shows edges */
+  z-index: -1;
+  pointer-events: none;
+  background:
+    radial-gradient(ellipse 60% 50% at 30% 40%, rgba(0,98,255,0.055) 0%, transparent 70%),
+    radial-gradient(ellipse 45% 55% at 70% 60%, rgba(0,229,255,0.04) 0%, transparent 70%);
+  will-change: transform;
+  transition: transform 0.12s linear;
+}
+
+/* NEW: Extra floating orbs that parallax at different speeds */
+#cq-orb-a, #cq-orb-b, #cq-orb-c {
+  position: fixed;
+  border-radius: 50%;
+  pointer-events: none;
+  will-change: transform;
+  transition: transform 0.18s linear;
+}
+
+#cq-orb-a {
+  width: 340px; height: 340px;
+  top: -80px; left: -60px;
+  background: radial-gradient(circle, rgba(0,229,255,0.06) 0%, transparent 70%);
+  z-index: 0;
+}
+
+#cq-orb-b {
+  width: 280px; height: 280px;
+  bottom: -40px; right: -40px;
+  background: radial-gradient(circle, rgba(56,189,248,0.05) 0%, transparent 70%);
+  z-index: 0;
+}
+
+#cq-orb-c {
+  width: 220px; height: 220px;
+  top: 40%; left: 50%;
+  background: radial-gradient(circle, rgba(251,191,36,0.035) 0%, transparent 70%);
+  z-index: 0;
+  transform: translate(-50%, -50%);
+}
+
+
+/* ══════════════════════════════════════════════════════════════
+   TASK 4 – ORBITAL TAB SELECTOR
+   ══════════════════════════════════════════════════════════════ */
+
+/* Restore the original preview tab strip styling. */
+#preview-tabs {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  margin-left: auto;
+}
+
+#preview-tabs .tab-btn {
+  appearance: none;
+  border: 1px solid rgba(255,255,255,0.08);
+  background: rgba(255,255,255,0.04);
+  color: var(--text2);
+  border-radius: 10px;
+  padding: 8px 12px;
+  font-family: var(--font-ui);
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  transition: background 0.18s ease, border-color 0.18s ease, transform 0.18s ease, color 0.18s ease;
+  cursor: pointer;
+}
+
+#preview-tabs .tab-btn:hover {
+  background: rgba(255,255,255,0.07);
+  border-color: rgba(255,255,255,0.14);
+  transform: translateY(-1px);
+}
+
+#preview-tabs .tab-btn.active {
+  background: rgba(255,255,255,0.12);
+  border-color: rgba(255,255,255,0.22);
+  color: var(--text);
+}
+
+
+/* ══════════════════════════════════════════════════════════════
+   TASK 5 – LEFT PANEL VISUAL POLISH
+   ══════════════════════════════════════════════════════════════ */
+
+/* UPDATED: Instructions panel — improved spacing + subtle top border accent */
+#instructions-panel {
+  border-top: 2px solid transparent;
+  transition: border-color 0.4s ease;
+}
+
+/* Accent color follows active chapter badge */
+#instructions-panel:has(.badge-html) { border-top-color: var(--html); }
+#instructions-panel:has(.badge-css)  { border-top-color: var(--css);  }
+#instructions-panel:has(.badge-js)   { border-top-color: var(--js);   }
+
+/* UPDATED: Panel top bar — better hierarchy */
+#panel-top-bar {
+  padding: 18px 20px 12px;
+  background: linear-gradient(180deg, rgba(255,255,255,0.025) 0%, transparent 100%);
+}
+
+#level-title {
+  font-size: 1.1rem;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  line-height: 1.3;
+  margin-top: 6px;
+}
+
+/* UPDATED: Instructions body — breathing room */
+#instructions {
+  padding: 4px 20px 0;
+  line-height: 1.75;
+  font-size: 0.875rem;
+  color: var(--text2);
+}
+
+#instructions p        { margin-bottom: 10px; }
+#instructions strong   { color: var(--text); }
+#instructions code     {
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  background: rgba(255,255,255,0.06);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 1px 5px;
+  color: var(--css);
+}
+#instructions pre {
+  border-radius: 8px;
+  margin: 10px 0;
+  font-size: 0.78rem;
+  line-height: 1.6;
+}
+
+/* UPDATED: Hint area — cleaner */
+#hint-area {
+  padding: 10px 20px 14px;
+  flex-shrink: 0;
+}
+
+.btn-hint {
+  border-radius: 8px;
+  padding: 7px 14px;
+  font-size: 0.8rem;
+  border: 1px solid rgba(251,191,36,0.3);
+  background: rgba(251,191,36,0.07);
+  color: var(--js);
+  transition: background 0.18s ease, border-color 0.18s ease, transform 0.18s ease;
+  cursor: pointer;
+  font-family: var(--font-ui);
+  font-weight: 700;
+}
+.btn-hint:hover {
+  background: rgba(251,191,36,0.14);
+  border-color: rgba(251,191,36,0.55);
+  transform: translateY(-1px);
+}
+
+#hint-text {
+  margin-top: 10px;
+  padding: 10px 14px;
+  background: rgba(251,191,36,0.07);
+  border-left: 3px solid var(--js);
+  border-radius: 0 6px 6px 0;
+  font-size: 0.82rem;
+  line-height: 1.65;
+  color: var(--text2);
+  font-family: var(--font-mono);
+  white-space: pre-wrap;
+}
+
+/* UPDATED: Action row — equal weight buttons with better rhythm */
+#action-row {
+  padding: 10px 16px;
+  gap: 10px;
+}
+
+.btn-nav {
+  border-radius: 8px;
+  font-size: 0.82rem;
+  padding: 9px 16px;
+  transition: background 0.18s ease, border-color 0.18s ease, opacity 0.18s ease, transform 0.18s ease;
+}
+
+.btn-nav:not(:disabled):hover {
+  transform: none;   /* remove existing translateX from animations.js if needed */
+}
+
+.btn-run {
+  border-radius: 10px;
+  font-size: 0.9rem;
+  padding: 10px 22px;
+  transition: transform 0.18s ease, box-shadow 0.18s ease !important;
+}
+
+/* UPDATED: Editor header — nicer filename area */
+#editor-header {
+  border-bottom: 1px solid var(--border);
+  background: rgba(0,0,0,0.15);
+}
+
+#editor-filename {
+  font-size: 0.72rem;
+  letter-spacing: 0.04em;
+  color: var(--text3);
+  transition: color 0.2s ease;
+}
+
+/* UPDATED: Level pill — subtle glow ring */
+#level-pill {
+  border-radius: 8px;
+  transition: box-shadow 0.3s ease;
+}
+
+/* UPDATED: XP badge glow on XP gain */
+#xp-badge.cq-xp-flash {
+  animation: cqXpFlash 0.6s ease;
+}
+
+@keyframes cqXpFlash {
+  0%   { box-shadow: none; }
+  40%  { box-shadow: 0 0 0 4px rgba(52,211,153,0.4), 0 0 16px rgba(52,211,153,0.3); }
+  100% { box-shadow: none; }
+}
+
+/* UPDATED: Feedback dialogue — entry animation */
+#feedback:not(.fb-neutral) {
+  animation: cqFeedbackSlide 0.3s cubic-bezier(0.22,1,0.36,1) both;
+}
+
+@keyframes cqFeedbackSlide {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* UPDATED: Smoother level-dot hover */
+.level-dot {
+  transition: transform 0.18s ease, box-shadow 0.18s ease, opacity 0.18s ease !important;
+}
+.level-dot:hover {
+  transform: scale(1.25) !important;
+}
+
+/* UPDATED: Global button micro-interaction baseline */
+button:focus-visible {
+  outline: 2px solid rgba(56,189,248,0.7);
+  outline-offset: 2px;
+}
+
+/* ══════════════════════════════════════════════════════════════
+   RESPONSIVE: hide orbital on very small screens, restore tabs
+   ══════════════════════════════════════════════════════════════ */
+@media (max-width: 520px) {
+  #cq-orbital { display: none !important; }
+  #preview-tabs {
+    position: static !important;
+    width: auto !important;
+    height: auto !important;
+    clip: auto !important;
+    overflow: visible !important;
+    white-space: normal !important;
+    pointer-events: auto !important;
+  }
+}

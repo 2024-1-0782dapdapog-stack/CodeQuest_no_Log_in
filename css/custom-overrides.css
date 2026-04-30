@@ -1,0 +1,283 @@
+/* ============================================================
+   CODEQUEST – CUSTOM OVERRIDES
+   Task 1: Congratulations modal full-screen overlay fix
+   Task 2: Scarlet TTS speak button styles
+   ============================================================ */
+
+/* ── TASK 1: Win modal overlay backdrop ── */
+/* NEW: Full-screen dimming overlay rendered BEHIND the modal box */
+.modal {
+  display: none;
+  position: fixed !important;
+  inset: 0 !important;
+  z-index: 2147483647 !important;
+  /* Semi-transparent dark backdrop */
+  background: rgba(10, 12, 20, 0.82) !important;
+  backdrop-filter: blur(4px) !important;
+  -webkit-backdrop-filter: blur(4px) !important;
+  align-items: center !important;
+  justify-content: center !important;
+  /* Fade-in animation */
+  animation: modalFadeIn 0.28s cubic-bezier(0.22, 1, 0.36, 1) both;
+  pointer-events: auto !important;
+}
+
+/* Show modal when not hidden */
+.modal:not(.hidden) {
+  display: flex !important;
+}
+
+/* NEW: Scale-up entrance for the modal card */
+@keyframes modalFadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes modalCardPop {
+  from {
+    opacity: 0;
+    transform: scale(0.88) translateY(24px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+/* Modal card itself */
+.modal .modal-box {
+  position: relative !important;
+  z-index: 9001 !important;
+  animation: modalCardPop 0.32s cubic-bezier(0.22, 1, 0.36, 1) both;
+  pointer-events: auto !important;
+  /* Ensure it's always fully above any content */
+  margin: auto;
+}
+
+/* UPDATED: Prevent interaction with anything behind the open modal */
+body.modal-open #app,
+body.modal-open #layout,
+body.modal-open #left-panel,
+body.modal-open #preview-pane {
+  pointer-events: none !important;
+  user-select: none !important;
+}
+
+/* Ensure tutorial overlays never cover celebration modals. */
+body.modal-open #mentor-tour-overlay,
+body.modal-open #instruction-spotlight-overlay,
+body.modal-open #mentor-tour-card,
+body.modal-open #instruction-spotlight-card {
+  display: none !important;
+  pointer-events: none !important;
+}
+
+/* ── Instructions panel: no highlight artifacts ── */
+#instructions-panel.mentor-highlight {
+  box-shadow: none !important;
+  outline: none !important;
+  background: none !important;
+  z-index: 1;
+  position: relative;
+}
+
+/* ── TASK 2: Speak button for Scarlet TTS ── */
+/* NEW: Speak button in instruction panel */
+.btn-speak {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  border-radius: 8px;
+  border: 1.5px solid rgba(248, 113, 113, 0.5);
+  background: rgba(248, 113, 113, 0.1);
+  color: #f87171;
+  font-size: 0.78rem;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  transition: all 0.18s ease;
+  letter-spacing: 0.03em;
+  margin-top: 4px;
+}
+
+.btn-speak:hover {
+  background: rgba(248, 113, 113, 0.22);
+  border-color: #f87171;
+  transform: translateY(-1px);
+}
+
+.btn-speak:active {
+  transform: scale(0.97);
+}
+
+.btn-speak.speaking {
+  background: rgba(248, 113, 113, 0.25);
+  border-color: #f87171;
+  color: #fca5a5;
+  animation: speakPulse 1s ease-in-out infinite;
+}
+
+@keyframes speakPulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.65; }
+}
+
+/* ── Speak button row in instructions panel ── */
+#speak-btn-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 8px 0 4px 0;
+  padding: 0 2px;
+}
+
+/* ── Feedback mentor portrait (show it, not hidden by default) ── */
+#feedback.fb-wrong .feedback-mentor,
+#feedback.fb-correct .feedback-mentor {
+  display: block !important;
+}
+
+/* Shake animation for editor on wrong answer */
+@keyframes editorShake {
+  0%,100% { transform: translateX(0); }
+  20% { transform: translateX(-6px); }
+  40% { transform: translateX(6px); }
+  60% { transform: translateX(-4px); }
+  80% { transform: translateX(4px); }
+}
+
+#editor-wrap.shake {
+  animation: editorShake 0.35s ease;
+}
+
+/* ══════════════════════════════════════════════════════════════
+   POLISH PACK — immersive game feel
+   ══════════════════════════════════════════════════════════════ */
+
+/* Win overlay must cover EVERYTHING including left-panel stacking contexts */
+#cq-win-overlay {
+  isolation: isolate;
+}
+body.modal-open #left-panel,
+body.modal-open #app {
+  z-index: 0 !important;
+}
+
+/* ── XP badge flash when XP is earned ── */
+#xp-badge {
+  transition: box-shadow 0.2s ease, transform 0.2s ease;
+}
+#xp-badge.pop {
+  animation: xpPop 0.5s cubic-bezier(0.22,1,0.36,1);
+}
+@keyframes xpPop {
+  0%   { transform: scale(1);   box-shadow: none; }
+  40%  { transform: scale(1.22); box-shadow: 0 0 0 6px rgba(52,211,153,0.35), 0 0 20px rgba(52,211,153,0.25); }
+  100% { transform: scale(1);   box-shadow: none; }
+}
+
+/* ── Level pill glow on level change ── */
+#level-pill {
+  transition: box-shadow 0.3s ease;
+}
+#level-pill.glow {
+  animation: pillGlow 0.6s ease;
+}
+@keyframes pillGlow {
+  0%   { box-shadow: none; }
+  40%  { box-shadow: 0 0 0 5px rgba(56,189,248,0.4), 0 0 18px rgba(56,189,248,0.3); }
+  100% { box-shadow: none; }
+}
+
+/* ── Run button pulse while "loading" ── */
+.btn-run.running {
+  animation: runPulse 0.7s ease-in-out infinite;
+}
+@keyframes runPulse {
+  0%,100% { opacity: 1; }
+  50%     { opacity: 0.72; }
+}
+
+/* ── Chapter badge colour pop ── */
+.badge-html { background: rgba(251,113,133,0.15); color: #fb7185; border: 1px solid rgba(251,113,133,0.35); border-radius: 6px; padding: 3px 10px; font-size: 0.72rem; font-weight: 700; letter-spacing: 0.06em; display: inline-block; }
+.badge-css  { background: rgba(96,165,250,0.15);  color: #60a5fa; border: 1px solid rgba(96,165,250,0.35);  border-radius: 6px; padding: 3px 10px; font-size: 0.72rem; font-weight: 700; letter-spacing: 0.06em; display: inline-block; }
+.badge-js   { background: rgba(251,191,36,0.15);  color: #fbbf24; border: 1px solid rgba(251,191,36,0.35);  border-radius: 6px; padding: 3px 10px; font-size: 0.72rem; font-weight: 700; letter-spacing: 0.06em; display: inline-block; }
+
+/* ── Topbar glass effect ── */
+#topbar {
+  background: rgba(13,17,23,0.85) !important;
+  backdrop-filter: blur(12px) !important;
+  -webkit-backdrop-filter: blur(12px) !important;
+  border-bottom: 1px solid rgba(48,54,61,0.8) !important;
+}
+
+/* ── Editor focus ring ── */
+#code-input:focus {
+  outline: none;
+  box-shadow: inset 0 0 0 2px rgba(56,189,248,0.35);
+}
+
+/* ── Hint text highlight ── */
+#hint-text {
+  border-left: 3px solid #fbbf24 !important;
+  background: rgba(251,191,36,0.06) !important;
+}
+
+/* ── Smooth level-dot current indicator ── */
+.level-dot.current {
+  box-shadow: 0 0 0 3px rgba(56,189,248,0.6), 0 0 12px rgba(56,189,248,0.4) !important;
+  transform: scale(1.3) !important;
+}
+
+/* ── Read instructions button — now blue instead of red ── */
+.btn-speak {
+  border-color: rgba(56,189,248,0.5) !important;
+  background: rgba(56,189,248,0.08) !important;
+  color: #38bdf8 !important;
+}
+.btn-speak:hover {
+  background: rgba(56,189,248,0.18) !important;
+  border-color: #38bdf8 !important;
+}
+.btn-speak.speaking {
+  border-color: #38bdf8 !important;
+  color: #7dd3fc !important;
+}
+
+/* ── Preview pane chrome ── */
+#preview-header {
+  background: rgba(22,27,34,0.9) !important;
+  border-bottom: 1px solid #21262d !important;
+}
+
+/* ── Feedback card position — clear of left panel ── */
+#cq-feedback-card {
+  bottom: 20px !important;
+  right: 20px !important;
+  max-width: 340px !important;
+}
+
+/* ── Win card entrance animation ── */
+#cq-win-card {
+  animation: winEntrance 0.4s cubic-bezier(0.22,1,0.36,1) !important;
+}
+@keyframes winEntrance {
+  from { opacity: 0; transform: scale(0.82) translateY(20px); }
+  to   { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+/* ── Button baseline feel ── */
+button { cursor: pointer; }
+.btn-nav:not(:disabled):hover { opacity: 0.85; }
+.btn-nav:disabled { opacity: 0.35; cursor: not-allowed; }
+
+/* ── Scrollbar (Webkit) ── */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.12); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.22); }
