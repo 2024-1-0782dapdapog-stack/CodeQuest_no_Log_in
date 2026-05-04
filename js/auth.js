@@ -1,34 +1,130 @@
 (function () {
   'use strict';
 
-  var USERS_DB = {
-    admin: {
-      password: 'admin123',
-      displayName: 'Admin',
-      email: 'admin@codequest.com',
-      role: 'admin',
-        unlimitedHints: true
-    },
-    student1: {
-      password: 'pass123',
-      displayName: 'Student One',
-      email: 'student1@codequest.com',
-      role: 'student',
-      unlimitedHints: false
-    },
-    student2: {
-      password: 'pass456',
-      displayName: 'Student Two',
-      email: 'student2@codequest.com',
-      role: 'student',
-      unlimitedHints: false
-    }
-  };
+  var USERS_DB = {};
+  var USERS_STORAGE_KEY = 'codequest_users_v2';
+  var LEGACY_USERS_STORAGE_KEY = 'codequest_users_v1';
+  var SESSION_KEY = 'codequest_session';
+  var storage = window.CQ_STORAGE;
 
   var pendingAction = null;
   var interceptAttached = false;
 
-  /* ── Error helpers ── */
+  function getString(key, fallback) {
+    if (storage && storage.getString) return storage.getString(key, fallback);
+    try {
+      var value = localStorage.getItem(key);
+      return value === null ? fallback : value;
+    } catch (e) {
+      return fallback;
+    }
+  }
+
+  function setString(key, value) {
+    if (storage && storage.setString) return storage.setString(key, value);
+    try {
+      localStorage.setItem(key, String(value));
+      return true;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  function getJSON(key, fallback) {
+    if (storage && storage.getJSON) return storage.getJSON(key, fallback);
+    try {
+      var raw = localStorage.getItem(key);
+      if (!raw) return fallback;
+      return JSON.parse(raw);
+    } catch (e) {
+      return fallback;
+    }
+  }
+
+  function setJSON(key, value) {
+    if (storage && storage.setJSON) return storage.setJSON(key, value);
+    try {
+      localStorage.setItem(key, JSON.stringify(value));
+      return true;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  function removeKey(key) {
+    if (storage && storage.remove) return storage.remove(key);
+    try {
+      localStorage.removeItem(key);
+      return true;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  function normalizeUsername(username) {
+    return (username || '').toLowerCase().trim();
+  }
+
+  function isValidUsername(username) {
+    return /^[a-z0-9_]{3,24}$/.test(username);
+  }
+
+  function isValidEmail(email) {
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+  }
+
+  function sha256Hex(input) {
+    if (!window.crypto || !window.crypto.subtle || !window.TextEncoder) {
+      return Promise.resolve('plain:' + input);
+    }
+    var encoder = new TextEncoder();
+    return window.crypto.subtle.digest('SHA-256', encoder.encode(input)).then(function (buffer) {
+      var bytes = new Uint8Array(buffer);
+      var hex = '';
+      for (var i = 0; i < bytes.length; i += 1) {
+        var part = bytes[i].toString(16);
+        hex += part.length === 1 ? '0' + part : part;
+      }
+      return hex;
+    }).catch(function () {
+      return 'plain:' + input;
+    });
+  }
+
+  function hashPassword(password) {
+    return sha256Hex(String(password || ''));
+  }
+
+  function loadUsers() {
+    var savedUsers = getJSON(USERS_STORAGE_KEY, null);
+    if (!savedUsers) {
+      var legacyUsers = getJSON(LEGACY_USERS_STORAGE_KEY, null);
+      if (legacyUsers && typeof legacyUsers === 'object') {
+        savedUsers = legacyUsers;
+      }
+    }
+
+    if (!savedUsers || typeof savedUsers !== 'object') return;
+
+    Object.keys(savedUsers).forEach(function (key) {
+      USERS_DB[key] = savedUsers[key];
+    });
+
+    // Remove common demo accounts from older builds.
+    ['admin', 'student1', 'student2'].forEach(function (legacyUser) {
+      if (USERS_DB[legacyUser] && USERS_DB[legacyUser].email && /@codequest\.com$/i.test(USERS_DB[legacyUser].email)) {
+        delete USERS_DB[legacyUser];
+      }
+    });
+
+    saveUsers();
+    removeKey(LEGACY_USERS_STORAGE_KEY);
+  }
+
+  function saveUsers() {
+    setJSON(USERS_STORAGE_KEY, USERS_DB);
+  }
+
   function showModalError(msg) {
     var err = document.getElementById('cq-login-error');
     if (!err) return;
@@ -43,20 +139,13 @@
     err.style.display = 'none';
   }
 
-  /* ── Modal open / close ── */
   function openLoginModal() {
     var modal = document.getElementById('cq-login-modal');
     if (!modal) return;
     clearModalError();
-    
-    // Reset to Sign In mode (safely - switchAuthMode checks if elements exist)
-    try {
-      switchAuthMode('signin');
-    } catch (e) {
-      console.log('Could not switch auth mode:', e.message);
-    }
-    
+    switchAuthMode('signin');
     modal.style.display = 'flex';
+    modal.setAttribute('aria-hidden', 'false');
     var inp = document.getElementById('cq-username-input');
     if (inp) setTimeout(function () { inp.focus(); }, 80);
   }
@@ -65,10 +154,10 @@
     var modal = document.getElementById('cq-login-modal');
     if (!modal) return;
     modal.style.display = 'none';
+    modal.setAttribute('aria-hidden', 'true');
     clearModalError();
   }
 
-  /* ── Dropdown ── */
   function closeDropdown() {
     var dd = document.getElementById('cq-user-dropdown');
     if (!dd) return;
@@ -78,14 +167,9 @@
   function toggleDropdown() {
     var dd = document.getElementById('cq-user-dropdown');
     if (!dd) return;
-    if (dd.classList.contains('open')) {
-      closeDropdown();
-    } else {
-      dd.classList.add('open');
-    }
+    dd.classList.toggle('open');
   }
 
-  /* ── User button icon ── */
   function updateUserButton(user) {
     var btn = document.getElementById('cq-user-btn');
     if (!btn) return;
@@ -93,10 +177,12 @@
       btn.innerHTML = '<svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path fill="#34d399" d="M12 12a5 5 0 1 0-5-5 5 5 0 0 0 5 5zm0 2c-4.42 0-8 2.24-8 5v1h16v-1c0-2.76-3.58-5-8-5z"/></svg>';
       btn.classList.add('logged-in');
       btn.title = 'Signed in as ' + user.displayName;
+      btn.setAttribute('aria-label', 'Signed in as ' + user.displayName);
     } else {
       btn.innerHTML = '<svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path fill="currentColor" d="M12 12a5 5 0 1 0-5-5 5 5 0 0 0 5 5zm0 2c-4.42 0-8 2.24-8 5v1h16v-1c0-2.76-3.58-5-8-5z"/></svg>';
       btn.classList.remove('logged-in');
       btn.title = 'Sign in';
+      btn.setAttribute('aria-label', 'Open sign in dialog');
     }
   }
 
@@ -107,219 +193,208 @@
     if (emailEl) emailEl.textContent = user ? (user.email || '') : '';
   }
 
-  /* ── Progress save / load (per-user localStorage) ── */
   function saveProgress() {
     if (!window.CQ_USER) return;
     var key = 'codequest_progress_' + window.CQ_USER.uid;
-    var progress = localStorage.getItem('codequest_v2');
-    var hints = localStorage.getItem('codequest_hint_points');
-    if (progress) localStorage.setItem(key + '_progress', progress);
-    if (hints)    localStorage.setItem(key + '_hints', hints);
+    var progress = getString('codequest_v2', null);
+    var hints = getString('codequest_hint_points', null);
+    if (progress) setString(key + '_progress', progress);
+    if (hints) setString(key + '_hints', hints);
   }
 
   function loadProgress() {
     if (!window.CQ_USER) return;
     var key = 'codequest_progress_' + window.CQ_USER.uid;
-    var savedProgress = localStorage.getItem(key + '_progress');
-    var savedHints    = localStorage.getItem(key + '_hints');
-    // If there is per-user saved progress, restore it; otherwise clear global progress
-    if (savedProgress) {
-      localStorage.setItem('codequest_v2', savedProgress);
-    } else {
-      localStorage.removeItem('codequest_v2');
-    }
-    if (savedHints) {
-      localStorage.setItem('codequest_hint_points', savedHints);
-    } else {
-      localStorage.removeItem('codequest_hint_points');
-    }
+    var savedProgress = getString(key + '_progress', null);
+    var savedHints = getString(key + '_hints', null);
+    if (savedProgress) setString('codequest_v2', savedProgress);
+    else removeKey('codequest_v2');
+
+    if (savedHints) setString('codequest_hint_points', savedHints);
+    else removeKey('codequest_hint_points');
   }
 
-  /* ── Login ── */
+  function verifyAndMaybeMigratePassword(key, user, providedPassword) {
+    if (!user) return Promise.resolve(false);
+    if (user.passwordHash) {
+      return hashPassword(providedPassword).then(function (hashed) {
+        return user.passwordHash === hashed;
+      });
+    }
+    if (!user.password) return Promise.resolve(false);
+    if (user.password !== providedPassword) return Promise.resolve(false);
+
+    return hashPassword(providedPassword).then(function (hashed) {
+      user.passwordHash = hashed;
+      delete user.password;
+      USERS_DB[key] = user;
+      saveUsers();
+      return true;
+    });
+  }
+
   function login(username, password) {
-    var key = (username || '').toLowerCase().trim();
+    var key = normalizeUsername(username);
     var user = USERS_DB[key];
-    if (!user || user.password !== password) {
-      showModalError('Incorrect username or password.');
-      return;
-    }
-    clearModalError();
-    window.CQ_USER = {
-      uid: key,
-      displayName: user.displayName,
-      email: user.email,
-      role: user.role,
-      photoURL: null
-    };
-    localStorage.setItem('codequest_session', JSON.stringify(window.CQ_USER));
-    loadProgress();
-    // If the game is running, tell it to reload progress from localStorage
-    try {
-      if (window.CQ_GAME && typeof window.CQ_GAME.loadNow === 'function') {
-        // small delay to let other modules settle
-        setTimeout(function () { window.CQ_GAME.loadNow(); }, 40);
+
+    return verifyAndMaybeMigratePassword(key, user, password).then(function (ok) {
+      if (!ok) {
+        showModalError('Incorrect username or password.');
+        return;
       }
-    } catch (e) {}
-    updateUserButton(window.CQ_USER);
-    updateDropdownUser(window.CQ_USER);
-    applyLoggedInState();
-    closeLoginModal();
-    // unlimited hints feature removed — hints now always cost points
-    if (pendingAction) {
-      var action = pendingAction;
-      pendingAction = null;
-      setTimeout(action, 60);
-    }
+
+      clearModalError();
+      window.CQ_USER = {
+        uid: key,
+        displayName: user.displayName,
+        email: user.email,
+        role: user.role || 'student',
+        photoURL: null
+      };
+
+      setJSON(SESSION_KEY, window.CQ_USER);
+      loadProgress();
+
+      try {
+        if (window.CQ_GAME && typeof window.CQ_GAME.loadNow === 'function') {
+          setTimeout(function () { window.CQ_GAME.loadNow(); }, 40);
+        }
+      } catch (e) {}
+
+      updateUserButton(window.CQ_USER);
+      updateDropdownUser(window.CQ_USER);
+      applyLoggedInState();
+      closeLoginModal();
+
+      if (pendingAction) {
+        var action = pendingAction;
+        pendingAction = null;
+        setTimeout(action, 60);
+      }
+    }).catch(function () {
+      showModalError('Sign in failed. Please try again.');
+    });
   }
 
-  /* ── Sign up ── */
   function signup(username, email, password, confirmPassword) {
-    var key = (username || '').toLowerCase().trim();
+    var key = normalizeUsername(username);
     var emailTrimmed = (email || '').toLowerCase().trim();
-    
-    // Validation
-    if (!key || key.length < 3) {
-      showModalError('Username must be at least 3 characters.');
-      return;
+
+    if (!isValidUsername(key)) {
+      showModalError('Username must be 3-24 chars (letters, numbers, underscore).');
+      return Promise.resolve();
     }
     if (USERS_DB[key]) {
       showModalError('Username already taken. Please choose another.');
-      return;
+      return Promise.resolve();
     }
-    if (!emailTrimmed || !emailTrimmed.includes('@')) {
+    if (!isValidEmail(emailTrimmed)) {
       showModalError('Please enter a valid email address.');
-      return;
+      return Promise.resolve();
     }
-    if (!password || password.length < 6) {
-      showModalError('Password must be at least 6 characters.');
-      return;
+    if (!password || password.length < 8) {
+      showModalError('Password must be at least 8 characters.');
+      return Promise.resolve();
     }
     if (password !== confirmPassword) {
       showModalError('Passwords do not match.');
-      return;
+      return Promise.resolve();
     }
-    
-    // Create new user
-    var displayName = username.charAt(0).toUpperCase() + username.slice(1);
-    USERS_DB[key] = {
-      password: password,
-      displayName: displayName,
-      email: emailTrimmed,
-      role: 'student',
-      unlimitedHints: false
-    };
-    
-    clearModalError();
-    // Auto-login after signup
-    login(username, password);
+
+    return hashPassword(password).then(function (passwordHash) {
+      var displayName = username.trim().charAt(0).toUpperCase() + username.trim().slice(1);
+      USERS_DB[key] = {
+        passwordHash: passwordHash,
+        displayName: displayName,
+        email: emailTrimmed,
+        role: 'student',
+        unlimitedHints: false
+      };
+      saveUsers();
+      clearModalError();
+      return login(username, password);
+    }).catch(function () {
+      showModalError('Could not create account. Please try again.');
+    });
   }
 
-  /* ── Toggle sign in / sign up form ── */
   function switchAuthMode(mode) {
     var signinForm = document.getElementById('cq-signin-form');
     var signupForm = document.getElementById('cq-signup-form');
     var signinTab = document.getElementById('cq-signin-tab');
     var signupTab = document.getElementById('cq-signup-tab');
-    
-    if (!signinForm || !signupForm) return;
-    
+    if (!signinForm || !signupForm || !signinTab || !signupTab) return;
+
     clearModalError();
-    
+
     if (mode === 'signup') {
       signinForm.style.display = 'none';
       signupForm.style.display = 'flex';
       signinTab.classList.remove('active');
       signupTab.classList.add('active');
-      
-      // Clear and focus first field in signup form
       var signupUsernameInput = document.getElementById('cq-signup-username-input');
       if (signupUsernameInput) {
         signupUsernameInput.value = '';
         setTimeout(function () { signupUsernameInput.focus(); }, 50);
       }
-      document.getElementById('cq-email-input').value = '';
-      document.getElementById('cq-signup-password-input').value = '';
-      document.getElementById('cq-confirm-password-input').value = '';
+      var emailInput = document.getElementById('cq-email-input');
+      var passInput = document.getElementById('cq-signup-password-input');
+      var confirmInput = document.getElementById('cq-confirm-password-input');
+      if (emailInput) emailInput.value = '';
+      if (passInput) passInput.value = '';
+      if (confirmInput) confirmInput.value = '';
     } else {
       signinForm.style.display = 'flex';
       signupForm.style.display = 'none';
       signinTab.classList.add('active');
       signupTab.classList.remove('active');
-      
-      // Clear and focus first field in signin form
       var usernameInput = document.getElementById('cq-username-input');
       if (usernameInput) {
         usernameInput.value = '';
         setTimeout(function () { usernameInput.focus(); }, 50);
       }
-      document.getElementById('cq-password-input').value = '';
+      var passwordInput = document.getElementById('cq-password-input');
+      if (passwordInput) passwordInput.value = '';
     }
   }
 
-  /* ── Sign out ── */
   function signOut() {
     saveProgress();
     window.CQ_USER = null;
-    localStorage.removeItem('codequest_session');
+    removeKey(SESSION_KEY);
     closeDropdown();
     applyLoggedOutState();
     updateUserButton(null);
     updateDropdownUser(null);
-    // ensure hints remain behind point system (no-op)
   }
 
-  /* ── Logged-out / logged-in state ── */
   function applyLoggedOutState() {
     var startBtn = document.getElementById('startBtn');
     if (!startBtn) return;
-    // DISABLED: Auth check blocking game startup
-    // startBtn.disabled = true;
-    // startBtn.style.opacity = '0.45';
-    // startBtn.style.cursor = 'not-allowed';
-    // startBtn.title = 'Please sign in to start playing';
-
-    // if (!document.getElementById('cq-login-warning')) {
-    //   var warn = document.createElement('p');
-    //   warn.id = 'cq-login-warning';
-    //   warn.textContent = '🔒 Please sign in to start playing';
-    //   startBtn.insertAdjacentElement('afterend', warn);
-    // }
+    startBtn.disabled = false;
   }
 
   function applyLoggedInState() {
     var startBtn = document.getElementById('startBtn');
-    if (startBtn) {
-      startBtn.disabled = false;
-      startBtn.style.opacity = '';
-      startBtn.style.cursor = '';
-      startBtn.title = '';
-    }
+    if (startBtn) startBtn.disabled = false;
     var warn = document.getElementById('cq-login-warning');
     if (warn) warn.remove();
   }
 
-  /* ── Restore session from localStorage ── */
   function restoreSession() {
-    var raw = localStorage.getItem('codequest_session');
-    if (!raw) {
+    var user = getJSON(SESSION_KEY, null);
+    if (!user) {
       applyLoggedOutState();
       return;
     }
-    try {
-      var user = JSON.parse(raw);
-      window.CQ_USER = user;
-      loadProgress();
-      updateUserButton(user);
-      updateDropdownUser(user);
-      applyLoggedInState();
-      // unlimited hints removed; hints always cost points
-    } catch (e) {
-      localStorage.removeItem('codequest_session');
-      applyLoggedOutState();
-    }
+
+    window.CQ_USER = user;
+    loadProgress();
+    updateUserButton(user);
+    updateDropdownUser(user);
+    applyLoggedInState();
   }
 
-  /* ── Intercept start buttons ── */
   function attachStartInterceptors() {
     if (interceptAttached) return;
     var startBtn = document.getElementById('startBtn');
@@ -334,47 +409,57 @@
       }
     }, true);
 
-    /* hero CTA button (built by hero.js) — re-check after hero loads */
-    setTimeout(function () {
-      var heroCta = document.getElementById('hero-cta');
-      if (heroCta && !heroCta.__cqAuthPatched) {
-        heroCta.__cqAuthPatched = true;
-        heroCta.addEventListener('click', function (e) {
-          if (!window.CQ_USER) {
-            e.preventDefault();
-            e.stopImmediatePropagation();
-            pendingAction = function () { heroCta.click(); };
-            openLoginModal();
-          }
-        }, true);
-      }
-    }, 800);
-
     interceptAttached = true;
   }
 
-  /* ── Build floating 👤 button ── */
+  function attachHeroInterceptor() {
+    var heroCta = document.getElementById('hero-cta');
+    if (!heroCta || heroCta.__cqAuthPatched) return;
+    heroCta.__cqAuthPatched = true;
+
+    heroCta.addEventListener('click', function (e) {
+      if (!window.CQ_USER) {
+        e.preventDefault();
+        e.stopImmediatePropagation();
+        pendingAction = function () { heroCta.click(); };
+        openLoginModal();
+      }
+    }, true);
+  }
+
+  function watchHeroInterceptor() {
+    attachHeroInterceptor();
+    if (document.getElementById('hero-cta')) return;
+
+    var observer = new MutationObserver(function () {
+      attachHeroInterceptor();
+      if (document.getElementById('hero-cta')) observer.disconnect();
+    });
+    observer.observe(document.body, { childList: true, subtree: true });
+  }
+
   function buildUserButton() {
     if (document.getElementById('cq-user-btn')) return;
+
     var btn = document.createElement('button');
     btn.id = 'cq-user-btn';
     btn.type = 'button';
     btn.innerHTML = '<svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path fill="currentColor" d="M12 12a5 5 0 1 0-5-5 5 5 0 0 0 5 5zm0 2c-4.42 0-8 2.24-8 5v1h16v-1c0-2.76-3.58-5-8-5z"/></svg>';
     btn.title = 'Sign in';
+    btn.setAttribute('aria-label', 'Open sign in dialog');
+
     btn.addEventListener('click', function (e) {
       e.stopPropagation();
-      if (window.CQ_USER) {
-        toggleDropdown();
-      } else {
-        openLoginModal();
-      }
+      if (window.CQ_USER) toggleDropdown();
+      else openLoginModal();
     });
+
     document.body.appendChild(btn);
   }
 
-  /* ── Build user dropdown ── */
   function buildDropdown() {
     if (document.getElementById('cq-user-dropdown')) return;
+
     var dd = document.createElement('div');
     dd.id = 'cq-user-dropdown';
 
@@ -400,35 +485,34 @@
     document.body.appendChild(dd);
   }
 
-  /* ── Build login modal ── */
   function buildLoginModal() {
     if (document.getElementById('cq-login-modal')) return;
 
     var modal = document.createElement('div');
     modal.id = 'cq-login-modal';
+    modal.setAttribute('aria-hidden', 'true');
 
     var card = document.createElement('div');
     card.id = 'cq-login-card';
+    card.setAttribute('role', 'dialog');
+    card.setAttribute('aria-modal', 'true');
+    card.setAttribute('aria-label', 'Sign in dialog');
 
-    /* Close button */
     var close = document.createElement('button');
     close.id = 'cq-login-close';
     close.type = 'button';
-    close.textContent = '✕';
+    close.textContent = 'X';
     close.setAttribute('aria-label', 'Close');
     close.addEventListener('click', closeLoginModal);
 
-    /* Logo */
     var logo = document.createElement('div');
     logo.id = 'cq-login-logo';
     logo.innerHTML = 'Code<span>Quest</span>';
 
-    /* Subtitle */
     var sub = document.createElement('p');
     sub.id = 'cq-login-sub';
-    sub.textContent = 'Sign in to keep your progress safe or switch accounts.';
+    sub.textContent = 'Create a local account to save progress in this browser.';
 
-    /* Tabs */
     var tabs = document.createElement('div');
     tabs.id = 'cq-login-tabs';
 
@@ -449,7 +533,6 @@
     tabs.appendChild(signinTab);
     tabs.appendChild(signupTab);
 
-    /* ===== SIGN IN FORM ===== */
     var signinForm = document.createElement('div');
     signinForm.id = 'cq-signin-form';
 
@@ -458,22 +541,18 @@
     usernameInput.type = 'text';
     usernameInput.placeholder = 'Username';
     usernameInput.autocomplete = 'username';
-    usernameInput.addEventListener('keydown', function (e) {
-      if (e.key === 'Enter') {
-        var passwordInput = document.getElementById('cq-password-input');
-        login(usernameInput.value, passwordInput.value);
-      }
-    });
 
     var passwordInput = document.createElement('input');
     passwordInput.id = 'cq-password-input';
     passwordInput.type = 'password';
     passwordInput.placeholder = 'Password';
     passwordInput.autocomplete = 'current-password';
+
+    usernameInput.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter') login(usernameInput.value, passwordInput.value);
+    });
     passwordInput.addEventListener('keydown', function (e) {
-      if (e.key === 'Enter') {
-        login(usernameInput.value, passwordInput.value);
-      }
+      if (e.key === 'Enter') login(usernameInput.value, passwordInput.value);
     });
 
     var submitBtn = document.createElement('button');
@@ -488,14 +567,13 @@
     signinForm.appendChild(passwordInput);
     signinForm.appendChild(submitBtn);
 
-    /* ===== SIGN UP FORM ===== */
     var signupForm = document.createElement('div');
     signupForm.id = 'cq-signup-form';
 
     var signupUsernameInput = document.createElement('input');
     signupUsernameInput.id = 'cq-signup-username-input';
     signupUsernameInput.type = 'text';
-    signupUsernameInput.placeholder = 'Username';
+    signupUsernameInput.placeholder = 'Username (letters, numbers, underscore)';
     signupUsernameInput.autocomplete = 'username';
 
     var signupEmailInput = document.createElement('input');
@@ -507,7 +585,7 @@
     var signupPasswordInput = document.createElement('input');
     signupPasswordInput.id = 'cq-signup-password-input';
     signupPasswordInput.type = 'password';
-    signupPasswordInput.placeholder = 'Password';
+    signupPasswordInput.placeholder = 'Password (8+ characters)';
     signupPasswordInput.autocomplete = 'new-password';
 
     var confirmPasswordInput = document.createElement('input');
@@ -515,6 +593,7 @@
     confirmPasswordInput.type = 'password';
     confirmPasswordInput.placeholder = 'Confirm Password';
     confirmPasswordInput.autocomplete = 'new-password';
+
     confirmPasswordInput.addEventListener('keydown', function (e) {
       if (e.key === 'Enter') {
         signup(signupUsernameInput.value, signupEmailInput.value, signupPasswordInput.value, confirmPasswordInput.value);
@@ -536,15 +615,13 @@
     signupForm.appendChild(confirmPasswordInput);
     signupForm.appendChild(signupSubmitBtn);
 
-    /* Error */
     var err = document.createElement('p');
     err.id = 'cq-login-error';
     err.style.display = 'none';
 
-    /* Note */
     var note = document.createElement('p');
     note.id = 'cq-login-note';
-    note.textContent = 'Progress is automatically saved to this browser. Signing in lets you save it to your own account!';
+    note.textContent = 'Accounts are stored locally in this browser. Use only for learning and demos.';
 
     card.appendChild(close);
     card.appendChild(logo);
@@ -558,7 +635,6 @@
     modal.appendChild(card);
     document.body.appendChild(modal);
 
-    /* Backdrop click closes modal */
     modal.addEventListener('click', function (e) {
       if (e.target === modal) closeLoginModal();
     });
@@ -567,25 +643,20 @@
     });
   }
 
-  /* ── Close dropdown when clicking outside ── */
   function initOutsideClick() {
     document.addEventListener('click', function (e) {
       var dd = document.getElementById('cq-user-dropdown');
       var btn = document.getElementById('cq-user-btn');
       if (!dd || !btn) return;
-      if (!dd.contains(e.target) && e.target !== btn) {
-        closeDropdown();
-      }
+      if (!dd.contains(e.target) && e.target !== btn) closeDropdown();
     });
   }
 
-  /* ── Auto-save ── */
   function initAutoSave() {
     window.addEventListener('beforeunload', saveProgress);
     setInterval(saveProgress, 90000);
   }
 
-  /* ── Public API ── */
   window.CQ_AUTH = {
     signOut: signOut,
     getUser: function () { return window.CQ_USER; },
@@ -593,8 +664,8 @@
     loadNow: loadProgress
   };
 
-  /* ── Init ── */
   function init() {
+    loadUsers();
     window.CQ_USER = null;
     buildUserButton();
     buildDropdown();
@@ -603,8 +674,9 @@
     initAutoSave();
     restoreSession();
     attachStartInterceptors();
-    /* Re-check interceptors after hero.js injects its button */
+    watchHeroInterceptor();
     setTimeout(attachStartInterceptors, 500);
+    setTimeout(attachHeroInterceptor, 500);
     setTimeout(restoreSession, 400);
   }
 

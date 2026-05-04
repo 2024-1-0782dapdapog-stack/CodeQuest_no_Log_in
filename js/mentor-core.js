@@ -22,6 +22,7 @@
     voicesSignature: '',
     dialogueText: defaultDialogue
   };
+  const storage = window.CQ_STORAGE;
 
   function voiceKey(voice) {
     return ((voice && (voice.voiceURI || voice.name || '')) || '').toLowerCase();
@@ -51,6 +52,9 @@
   }
 
   function safeGetStorage(key, fallback) {
+    if (storage && storage.getString) {
+      return storage.getString(key, fallback);
+    }
     try {
       const value = localStorage.getItem(key);
       return value === null ? fallback : value;
@@ -60,6 +64,10 @@
   }
 
   function safeSetStorage(key, value) {
+    if (storage && storage.setString) {
+      storage.setString(key, value);
+      return;
+    }
     try {
       localStorage.setItem(key, value);
     } catch (e) {}

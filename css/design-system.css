@@ -1,0 +1,146 @@
+/* CodeQuest design system: shared tokens and the learning workspace emphasis. */
+:root {
+  --cq-bg: #0f172a;
+  --cq-panel: #111827;
+  --cq-panel-2: #172033;
+  --cq-panel-3: #1f2937;
+  --cq-line: rgba(148, 163, 184, 0.22);
+  --cq-line-strong: rgba(148, 163, 184, 0.36);
+  --cq-text: #f8fafc;
+  --cq-muted: #94a3b8;
+  --cq-dim: #64748b;
+  --cq-accent: #38bdf8;
+  --cq-success: #34d399;
+  --cq-warning: #fbbf24;
+  --cq-danger: #fb7185;
+  --cq-radius-sm: 6px;
+  --cq-radius: 8px;
+  --cq-radius-lg: 12px;
+  --cq-shadow-panel: 0 16px 40px rgba(0, 0, 0, 0.22);
+  --cq-layer-base: 0;
+  --cq-layer-header: 40;
+  --cq-layer-panel: 80;
+  --cq-layer-modal: 400;
+  --cq-layer-toast: 500;
+  --bg: var(--cq-bg);
+  --surface: var(--cq-panel);
+  --surface2: var(--cq-panel-2);
+  --surface3: var(--cq-panel-3);
+  --border: var(--cq-line);
+  --border2: var(--cq-line-strong);
+  --text: var(--cq-text);
+  --text2: var(--cq-muted);
+  --text3: var(--cq-dim);
+  --radius: var(--cq-radius);
+}
+
+body {
+  background: var(--cq-bg);
+}
+
+#topbar {
+  z-index: var(--cq-layer-header);
+  border-bottom: 1px solid var(--cq-line);
+  box-shadow: none;
+}
+
+#layout {
+  background: var(--cq-bg);
+}
+
+#instructions-panel,
+#editor-wrap,
+#preview-pane {
+  border-color: var(--cq-line);
+  box-shadow: var(--cq-shadow-panel);
+}
+
+#instructions-panel {
+  background: linear-gradient(180deg, rgba(17, 24, 39, 0.98), rgba(15, 23, 42, 0.98));
+}
+
+#editor-wrap,
+#preview-pane {
+  background: var(--cq-panel);
+}
+
+#instructions {
+  font-size: 0.98rem;
+  line-height: 1.75;
+}
+
+#code-input {
+  line-height: 1.7;
+}
+
+#feedback {
+  border-top: 1px solid var(--cq-line);
+  box-shadow: none;
+}
+
+#preview-content {
+  padding: 8px;
+  background: #0b0f16;
+}
+
+#preview-frame {
+  width: 100%;
+  height: 100%;
+  border-radius: var(--cq-radius-sm);
+  background: #ffffff;
+}
+
+#preview-frame:not(.hidden) {
+  height: calc(100% - 16px);
+}
+
+#preview-content .code-view {
+  inset: 8px;
+  border-radius: var(--cq-radius-sm);
+}
+
+.modal {
+  z-index: var(--cq-layer-modal) !important;
+}
+
+.modal-box,
+.cq-login-card,
+.tts-picker-card {
+  border-radius: var(--cq-radius-lg) !important;
+  border: 1px solid var(--cq-line-strong);
+  box-shadow: 0 24px 70px rgba(0, 0, 0, 0.38);
+}
+
+.btn-start,
+.btn-run,
+.btn-nav,
+.btn-hint,
+.tts-picker-primary,
+.tts-picker-secondary,
+#ai-send-btn {
+  border-radius: var(--cq-radius) !important;
+}
+
+#cq-hero #hero-content {
+  max-width: 760px;
+  border-radius: var(--cq-radius-lg);
+  background: rgba(8, 17, 34, 0.34);
+  box-shadow: 0 20px 54px rgba(0, 0, 0, 0.28);
+}
+
+#hero-tracks {
+  opacity: 0.9;
+}
+
+@media (max-width: 700px) {
+  #layout {
+    gap: 0;
+  }
+
+  #instructions-panel,
+  #editor-wrap,
+  #preview-pane {
+    box-shadow: none;
+    border-radius: 0;
+  }
+}

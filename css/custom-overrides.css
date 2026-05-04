@@ -10,7 +10,7 @@
   display: none;
   position: fixed !important;
   inset: 0 !important;
-  z-index: 2147483647 !important;
+  z-index: var(--cq-layer-modal, 400) !important;
   /* Semi-transparent dark backdrop */
   background: rgba(10, 12, 20, 0.82) !important;
   backdrop-filter: blur(4px) !important;
@@ -51,7 +51,7 @@
 /* Modal card itself */
 .modal .modal-box {
   position: relative !important;
-  z-index: 9001 !important;
+  z-index: calc(var(--cq-layer-modal, 400) + 1) !important;
   animation: modalCardPop 0.32s cubic-bezier(0.22, 1, 0.36, 1) both;
   pointer-events: auto !important;
   /* Ensure it's always fully above any content */

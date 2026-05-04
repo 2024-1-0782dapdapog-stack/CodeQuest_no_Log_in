@@ -86,14 +86,14 @@ body.cq-game-mode #cq-user-dropdown {
 #mentor-tour-overlay,
 #instruction-spotlight-overlay {
   position: fixed !important;
-  z-index: 2147483600 !important;
+  z-index: var(--cq-layer-modal, 400) !important;
   isolation: isolate;
 }
 
 #mentor-tour-card,
 #instruction-spotlight-card {
   position: fixed !important;
-  z-index: 2147483649 !important;
+  z-index: calc(var(--cq-layer-modal, 400) + 2) !important;
 }
 
 /* ============================================================

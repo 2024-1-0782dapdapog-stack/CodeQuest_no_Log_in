@@ -7,25 +7,32 @@
   var HINT_COST      = 150;   // flat cost to reveal any hint
   var WIN_REWARD     = 100;   // points earned every time a level is completed
   var TOAST_ID       = 'cq-active-toast';
+  var storage        = window.CQ_STORAGE;
 
   /* ══════════════════════════════════════════════════════
      BALANCE  (localStorage-backed)
   ══════════════════════════════════════════════════════ */
   function readBalance() {
-    var raw = localStorage.getItem(STORAGE_KEY);
+    var raw = storage && storage.getString
+      ? storage.getString(STORAGE_KEY, null)
+      : localStorage.getItem(STORAGE_KEY);
     if (raw === null) {
-      localStorage.setItem(STORAGE_KEY, String(STARTING_POINTS));
+      writeBalance(STARTING_POINTS);
       return STARTING_POINTS;
     }
     var parsed = parseInt(raw, 10);
-    if (!Number.isFinite(parsed)) {
-      localStorage.setItem(STORAGE_KEY, String(STARTING_POINTS));
+    if (!Number.isFinite(parsed) || parsed < 0) {
+      writeBalance(STARTING_POINTS);
       return STARTING_POINTS;
     }
     return parsed;
   }
 
   function writeBalance(value) {
+    if (storage && storage.setString) {
+      storage.setString(STORAGE_KEY, value);
+      return;
+    }
     localStorage.setItem(STORAGE_KEY, String(value));
   }
 

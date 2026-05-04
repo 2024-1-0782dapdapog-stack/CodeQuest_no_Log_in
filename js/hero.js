@@ -16,11 +16,16 @@
     <div id="hero-content">
       <div id="hero-kicker">24 LEVELS · PROGRESS SAVES AUTOMATICALLY</div>
       <h1 id="hero-title">Code<span class="accent">Quest</span></h1>
-      <p id="hero-sub">Build real websites from scratch. No account needed—your progress saves directly to your browser!</p>
+      <p id="hero-sub">Build real websites from scratch. Sign in locally and keep your progress on this browser.</p>
       <div id="hero-tracks">
         <div class="hero-track"><span class="hero-track-icon">🏗️</span>HTML · Levels 1-7</div>
         <div class="hero-track"><span class="hero-track-icon">🎨</span>CSS · Levels 8-14</div>
         <div class="hero-track"><span class="hero-track-icon">⚡</span>JavaScript · Levels 15-24</div>
+      </div>
+      <div id="hero-quests" aria-label="Choose your quest">
+        <button type="button" class="hero-quest active" data-quest-id="portfolio">Build a Portfolio</button>
+        <button type="button" class="hero-quest" data-quest-id="cafe">Launch a Cafe Site</button>
+        <button type="button" class="hero-quest" data-quest-id="mini">Code a Mini Game</button>
       </div>
       <button id="hero-cta" type="button">Start Learning <span class="hero-cta-arrow">→</span></button>
     </div>
@@ -95,6 +100,10 @@
     'near launch threshold'
   ];
 
+  function prefersLiteHero() {
+    return window.matchMedia('(max-width: 820px), (hover: none) and (pointer: coarse), (prefers-reduced-motion: reduce)').matches;
+  }
+
   function updateTerminalByProgress(progress) {
     if (!glitchEl) return;
     const index = Math.min(
@@ -127,6 +136,10 @@
   const delayedTimers = [];
 
   function loadThree(callback) {
+    if (prefersLiteHero()) {
+      hero.classList.add('hero-lite');
+      return;
+    }
     if (window.THREE) {
       callback();
       return;
@@ -801,6 +814,7 @@
   }
 
   hero.addEventListener('mousemove', event => {
+    if (prefersLiteHero()) return;
     mouse.tx = ((event.clientX / window.innerWidth) - 0.5) * 1.5;
     mouse.ty = ((event.clientY / window.innerHeight) - 0.5) * 0.45;
   }, { passive: true });
@@ -907,6 +921,24 @@
   };
 
   const cta = document.getElementById('hero-cta');
+  const questButtons = Array.from(document.querySelectorAll('.hero-quest'));
+  function selectHeroQuest(id, shouldReset) {
+    questButtons.forEach(button => {
+      button.classList.toggle('active', button.dataset.questId === id);
+    });
+    if (window.CQ_QUESTS && window.CQ_QUESTS.selectQuest) {
+      window.CQ_QUESTS.selectQuest(id, { reset: !!shouldReset });
+    }
+  }
+  questButtons.forEach(button => {
+    button.addEventListener('click', event => {
+      event.preventDefault();
+      selectHeroQuest(button.dataset.questId || 'portfolio', true);
+    });
+  });
+  if (window.CQ_QUESTS && window.CQ_QUESTS.getCurrent) {
+    selectHeroQuest(window.CQ_QUESTS.getCurrent().id, false);
+  }
   if (cta) cta.addEventListener('click', exitHero);
 
   loadThree(() => {

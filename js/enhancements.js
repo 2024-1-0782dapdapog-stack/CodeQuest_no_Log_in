@@ -216,6 +216,10 @@
   ═══════════════════════════════════════════════════════════════ */
 
   (function initParallax() {
+    if (window.matchMedia && window.matchMedia('(max-width: 820px), (hover: none) and (pointer: coarse), (prefers-reduced-motion: reduce)').matches) {
+      return;
+    }
+
     // Inject depth layers into body (behind everything via z-index: -1)
     function createLayer(id) {
       const d = document.createElement('div');

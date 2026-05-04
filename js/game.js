@@ -73,6 +73,32 @@
   const LEVEL_SPOTLIGHT_STORAGE_KEY = 'codequest_instruction_spotlights_seen';
   let seenInstructionSpotlights = new Set();
 
+  function escapeHtml(value) {
+    return String(value || '')
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
+  }
+
+  function checkRuntimeDependencies() {
+    var ok = true;
+    if (!window.LEVELS || !Array.isArray(window.LEVELS) || window.LEVELS.length === 0) {
+      console.error('[Game] LEVELS is missing or invalid.');
+      ok = false;
+    }
+    if (!window.STATE) {
+      console.error('[Game] STATE is missing.');
+      ok = false;
+    }
+    if (!el.startBtn || !el.homeBtn || !el.runBtn || !el.codeInput) {
+      console.error('[Game] Missing required UI elements for game startup.');
+      ok = false;
+    }
+    return ok;
+  }
+
   try {
     const rawSeen = localStorage.getItem(LEVEL_SPOTLIGHT_STORAGE_KEY);
     if (rawSeen) {
@@ -287,29 +313,18 @@
      PROGRESS PERSISTENCE
      ───────────────────────────────────────── */
   function saveProgress() {
-    try {
-      localStorage.setItem('codequest_v2', JSON.stringify({
-        currentLevel, totalXP,
-        completedLevels: STATE.completedLevels,
-        userName: STATE.userName,
-        html: STATE.html, css: STATE.css, js: STATE.js
-      }));
-    } catch(e) {}
+    if (window.CQ_STATE) {
+      STATE.currentLevel = currentLevel;
+      STATE.totalXP = totalXP;
+      window.CQ_STATE.save();
+    }
   }
 
   function loadProgress() {
-    try {
-      const raw = localStorage.getItem('codequest_v2');
-      if (!raw) return;
-      const d = JSON.parse(raw);
-      currentLevel = Math.min(d.currentLevel || 0, LEVELS.length - 1);
-      totalXP = d.totalXP || 0;
-      STATE.completedLevels = d.completedLevels || [];
-      if (d.userName) STATE.userName = d.userName;
-      if (d.html) STATE.html = d.html;
-      if (d.css)  STATE.css  = d.css;
-      if (d.js)   STATE.js   = d.js;
-    } catch(e) {}
+    if (window.CQ_STATE) window.CQ_STATE.load();
+    currentLevel = Math.min(STATE.currentLevel || 0, LEVELS.length - 1);
+    totalXP = STATE.totalXP || 0;
+    if (!Array.isArray(STATE.completedLevels)) STATE.completedLevels = [];
   }
 
   /* ─────────────────────────────────────────
@@ -395,8 +410,9 @@
     el.chapterBadge.textContent = level.chapter + ' · Level ' + level.id;
     
     const userName = STATE.userName || 'Your Name';
+    const safeUserName = escapeHtml(userName);
     el.levelTitle.textContent = level.title.replace(/Your Name/g, userName);
-    el.instructions.innerHTML = level.instructions.replace(/Your Name/g, userName);
+    el.instructions.innerHTML = (level.instructions || '').replace(/Your Name/g, safeUserName);
     el.editorFilename.textContent = level.filename;
 
     // NEW TASK 2: Inject Speak button below instructions
@@ -450,6 +466,7 @@
     updateXP();
     renderLevelDots();
     renderPreview();
+    updateSafeCodeTabs();
     
     // DISABLED: Always read instructions via TTS - this was causing freezes
     // if (window.showInstructionSpotlight) {
@@ -564,7 +581,9 @@ footer{background:#0d1117;border-top:1px solid #21262d;text-align:center;padding
     setTimeout(() => URL.revokeObjectURL(url), 4000);
 
     // Update code tabs
-    el.htmlView.textContent = STATE.html;
+    el.htmlView.textContent = level.chapter === 'HTML'
+      ? (code || '<!-- Write HTML in the editor, then run it to preview. -->')
+      : 'HTML appears here during HTML levels.';
     el.cssView.textContent  = STATE.css  + (level.chapter === 'CSS'  ? '\n\n/* ── Current ── */\n' + code : '');
     el.jsView.textContent   = STATE.js   + (level.chapter === 'JS'   ? '\n\n// ── Current ──\n' + code : '');
   }
@@ -572,6 +591,21 @@ footer{background:#0d1117;border-top:1px solid #21262d;text-align:center;padding
   /* ─────────────────────────────────────────
      CHECK ANSWER
      ───────────────────────────────────────── */
+  function updateSafeCodeTabs() {
+    const level = LEVELS[currentLevel];
+    const code = el.codeInput.value;
+
+    el.htmlView.textContent = level.chapter === 'HTML'
+      ? (code || '<!-- Write HTML in the editor, then run it to preview. -->')
+      : 'HTML appears here during HTML levels.';
+    el.cssView.textContent = level.chapter === 'CSS'
+      ? (code || '/* Write CSS in the editor, then run it to preview. */')
+      : 'CSS appears here during CSS levels.';
+    el.jsView.textContent = level.chapter === 'JS'
+      ? (code || '// Write JavaScript in the editor, then run it to preview.')
+      : 'JavaScript appears here during JavaScript levels.';
+  }
+
   function checkAnswer() {
     const level = LEVELS[currentLevel];
     const code = el.codeInput.value.trim();
@@ -583,32 +617,38 @@ footer{background:#0d1117;border-top:1px solid #21262d;text-align:center;padding
     }
 
     attemptCount += 1;
-    const pass = level.checkFn(code, STATE);
+    const validation = window.CQ_VALIDATORS
+      ? window.CQ_VALIDATORS.validate(level, code, STATE)
+      : { ok: level.checkFn(code, STATE), message: '' };
+    const pass = validation.ok;
 
     if (pass) {
       // Persist code into shared state
-      if (level.chapter === 'HTML') {
-        STATE.html = code;
-        // Extraction of user name from level 1 h1
-        if (level.id === 1) {
-          const match = code.match(/<h1[^>]*>([^<]+)<\/h1>/i);
-          if (match && match[1]) {
-            STATE.userName = match[1].trim();
-          }
+      if (window.CQ_STATE) window.CQ_STATE.updateCode(level.chapter, code);
+      else if (level.chapter === 'HTML') STATE.html = code;
+      else if (level.chapter === 'CSS') STATE.css = (STATE.css + '\n' + code).trim();
+      else STATE.js = (STATE.js + '\n' + code).trim();
+
+      if (level.id === 1) {
+        const doc = new DOMParser().parseFromString(code, 'text/html');
+        const h1 = doc.querySelector('h1');
+        if (h1 && h1.textContent.trim()) {
+          if (window.CQ_STATE) window.CQ_STATE.setUserName(h1.textContent.trim());
+          else STATE.userName = h1.textContent.trim();
         }
-      } else if (level.chapter === 'CSS') {
-        STATE.css = (STATE.css + '\n' + code).trim();
-      } else {
-        STATE.js = (STATE.js + '\n' + code).trim();
       }
 
-      if (!STATE.completedLevels.includes(level.id)) {
-        STATE.completedLevels.push(level.id);
-        totalXP += level.xp;
-      }
+      if (window.CQ_STATE) {
+        window.CQ_STATE.completeLevel(level);
+        totalXP = STATE.totalXP || 0;
+      } else if (!STATE.completedLevels.includes(level.id)) {
+          STATE.completedLevels.push(level.id);
+          totalXP += level.xp;
+        }
 
       el.nextBtn.disabled = false;
       renderPreview(code);
+      updateSafeCodeTabs();
       saveProgress();
       updateXP(true);
       if (window.setMentorMood) window.setMentorMood('happy');
@@ -616,7 +656,7 @@ footer{background:#0d1117;border-top:1px solid #21262d;text-align:center;padding
       showWinModal(level);
 
     } else {
-      const tip = buildSmartDebugTip(level, code);
+      const tip = validation.message || buildSmartDebugTip(level, code);
       setFeedback('✗ Not quite. Tip: ' + tip, 'wrong');
       if (window.setMentorMood) window.setMentorMood('sad');
       if (attemptCount >= 2 && level.hint) {
@@ -756,6 +796,7 @@ footer{background:#0d1117;border-top:1px solid #21262d;text-align:center;padding
      ───────────────────────────────────────── */
   function goToLevel(idx) {
     currentLevel = Math.max(0, Math.min(idx, LEVELS.length - 1));
+    STATE.currentLevel = currentLevel;
     renderLevel(currentLevel);
     saveProgress();
   }
@@ -766,6 +807,11 @@ footer{background:#0d1117;border-top:1px solid #21262d;text-align:center;padding
   function fullReset() {
     currentLevel = 0;
     totalXP = 0;
+    if (window.CQ_QUESTS && typeof window.CQ_QUESTS.resetCurrentState === 'function') {
+      window.CQ_QUESTS.resetCurrentState();
+      return;
+    }
+    if (window.CQ_STATE) window.CQ_STATE.reset(false);
     STATE.completedLevels = [];
     STATE.css  = `/* Beautiful dark portfolio base — this is your canvas! */
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
@@ -838,7 +884,10 @@ footer{background:#0d1117;border-top:1px solid #21262d;text-align:center;padding
   <footer><p>© 2024 Your Name · Built with code & coffee ☕</p></footer>
 </body>
 </html>`;
-    localStorage.removeItem('codequest_v2');
+    STATE.currentLevel = 0;
+    STATE.totalXP = 0;
+    if (window.CQ_STATE) window.CQ_STATE.save();
+    else localStorage.removeItem('codequest_v2');
   }
 
   /* ─────────────────────────────────────────
@@ -847,6 +896,7 @@ footer{background:#0d1117;border-top:1px solid #21262d;text-align:center;padding
 
   function beginGame() {
     try {
+      if (!checkRuntimeDependencies()) return;
       console.log('[Game] beginGame() called');
       
       // Force remove modal-open class if it exists
@@ -985,9 +1035,12 @@ footer{background:#0d1117;border-top:1px solid #21262d;text-align:center;padding
 
   // Music toggle - Mute/Unmute Lo-Fi Girl
   el.musicToggleBtn.addEventListener('click', () => {
-    const isMuted = toggleMusicMute();
+    if (!window.toggleMusicMute) return;
+    const isMuted = window.toggleMusicMute();
     el.musicToggleBtn.textContent = isMuted ? '🔇' : '🎵';
     el.musicToggleBtn.title = isMuted ? 'Unmute Music' : 'Mute Music';
+    el.musicToggleBtn.setAttribute('aria-label', isMuted ? 'Unmute music' : 'Mute music');
+    el.musicToggleBtn.setAttribute('aria-pressed', isMuted ? 'true' : 'false');
   });
 
   // TTS toggle - Mute/Unmute mentor voice
@@ -1003,6 +1056,7 @@ footer{background:#0d1117;border-top:1px solid #21262d;text-align:center;padding
   el.runBtn.addEventListener('click', () => {
     el.runBtn.classList.add('running');
     renderPreview();
+    updateSafeCodeTabs();
     setTimeout(() => {
       checkAnswer();
       el.runBtn.classList.remove('running');
@@ -1029,6 +1083,7 @@ footer{background:#0d1117;border-top:1px solid #21262d;text-align:center;padding
     if (window.editorUpdateLineNumbers) window.editorUpdateLineNumbers();
     setFeedback('', 'neutral');
     renderPreview(el.codeInput.value);
+    updateSafeCodeTabs();
     el.codeInput.focus();
   });
 
@@ -1047,6 +1102,7 @@ footer{background:#0d1117;border-top:1px solid #21262d;text-align:center;padding
       el.previewTabs.forEach(b => b.classList.remove('active'));
       btn.classList.add('active');
       const tab = btn.dataset.tab;
+      updateSafeCodeTabs();
       el.previewFrame.classList.toggle('hidden', tab !== 'preview');
       el.htmlView.classList.toggle('hidden', tab !== 'html');
       el.cssView.classList.toggle('hidden',  tab !== 'css');
@@ -1082,7 +1138,10 @@ footer{background:#0d1117;border-top:1px solid #21262d;text-align:center;padding
   let previewTimer;
   el.codeInput.addEventListener('input', () => {
     clearTimeout(previewTimer);
-    previewTimer = setTimeout(() => renderPreview(el.codeInput.value), 500);
+    previewTimer = setTimeout(() => {
+      renderPreview(el.codeInput.value);
+      updateSafeCodeTabs();
+    }, 500);
   });
 
   /* ─────────────────────────────────────────
@@ -1094,6 +1153,14 @@ footer{background:#0d1117;border-top:1px solid #21262d;text-align:center;padding
     el.ttsToggleBtn.title = muted ? 'Unmute Mentor Voice' : 'Mute Mentor Voice';
     el.ttsToggleBtn.setAttribute('aria-label', muted ? 'Unmute Mentor Voice' : 'Mute Mentor Voice');
   }
+  if (window.getMusicMuted && el.musicToggleBtn) {
+    const isMuted = window.getMusicMuted();
+    el.musicToggleBtn.textContent = isMuted ? '🔇' : '🎵';
+    el.musicToggleBtn.title = isMuted ? 'Unmute Music' : 'Mute Music';
+    el.musicToggleBtn.setAttribute('aria-label', isMuted ? 'Unmute music' : 'Mute music');
+    el.musicToggleBtn.setAttribute('aria-pressed', isMuted ? 'true' : 'false');
+  }
+  checkRuntimeDependencies();
   initSmoothTransitions();
   loadProgress();
 

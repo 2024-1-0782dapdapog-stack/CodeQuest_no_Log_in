@@ -121,6 +121,37 @@
   flex-wrap: wrap;
 }
 
+#hero-quests {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  width: 100%;
+  margin: 18px auto 0;
+}
+
+.hero-quest {
+  min-width: 0;
+  min-height: 44px;
+  padding: 0 10px;
+  border: 1px solid rgba(148, 163, 184, 0.35);
+  border-radius: 8px;
+  background: rgba(15, 23, 42, 0.72);
+  color: rgba(226, 232, 240, 0.9);
+  font: 800 clamp(0.62rem, 1.05vw, 0.78rem) 'Space Mono', monospace;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  cursor: pointer;
+  transition: transform 0.18s ease, border-color 0.18s ease, background 0.18s ease;
+}
+
+.hero-quest:hover,
+.hero-quest.active {
+  transform: translateY(-1px);
+  border-color: rgba(96, 222, 255, 0.75);
+  background: rgba(14, 116, 144, 0.28);
+  color: #ffffff;
+}
+
 .hero-track {
   padding: 7px 13px;
   border-radius: 10px;
@@ -319,6 +350,12 @@
 
   .journey-section {
     margin-top: 16vh;
+  }
+}
+
+@media (max-width: 720px) {
+  #hero-quests {
+    grid-template-columns: 1fr;
   }
 }
 

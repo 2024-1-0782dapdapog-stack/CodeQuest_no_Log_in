@@ -1,12 +1,18 @@
 (function () {
   'use strict';
 
+  var storage = window.CQ_STORAGE;
+
   function safeJsonParse(raw) {
     if (!raw) return null;
     try { return JSON.parse(raw); } catch (e) { return null; }
   }
 
   function getStoredProgress() {
+    if (window.CQ_STATE && window.CQ_STATE.data) return window.CQ_STATE.data;
+    if (storage && storage.getJSON) {
+      return storage.getJSON('codequest_v2', {}) || {};
+    }
     return safeJsonParse(localStorage.getItem('codequest_v2')) || {};
   }
 
@@ -503,6 +509,7 @@
   }
 
   function getState() {
+    if (window.CQ_STATE && window.CQ_STATE.data) return window.CQ_STATE.data;
     if (window.STATE && (window.STATE.html || window.STATE.css || window.STATE.js)) return window.STATE;
     var stored = getStoredProgress();
     if (stored && (stored.html || stored.css || stored.js)) return stored;

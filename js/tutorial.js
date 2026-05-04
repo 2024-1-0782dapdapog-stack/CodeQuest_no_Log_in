@@ -224,7 +224,7 @@
       #mentor-tour-overlay {
         position: fixed;
         inset: 0;
-        z-index: 2147483599;
+        z-index: var(--cq-layer-modal, 400);
         background: rgba(3, 8, 20, 0.55);
         pointer-events: none;
         overflow: visible;
@@ -244,7 +244,7 @@
         padding: 0;
         color: #5b4328;
         pointer-events: auto;
-        z-index: 2147483649;
+        z-index: calc(var(--cq-layer-modal, 400) + 2);
         isolation: isolate;
         overflow: hidden;
         animation: mentorTourPop 0.34s cubic-bezier(0.22, 1, 0.36, 1) both;
@@ -412,7 +412,7 @@
       /* ── Arrow pointer ── */
       #mentor-tour-arrow {
         position: fixed;
-        z-index: 2147483644;
+        z-index: calc(var(--cq-layer-modal, 400) + 1);
         font-size: 34px;
         color: #fbbf24;
         text-shadow: 0 4px 12px rgba(0,0,0,0.45);
@@ -424,7 +424,7 @@
       /* ── Highlight ring ── */
       .mentor-highlight {
         position: relative;
-        z-index: 2147483642 !important;
+        z-index: calc(var(--cq-layer-modal, 400) + 1) !important;
         box-shadow: 0 0 0 4px rgba(251,191,36,0.98), 0 0 0 10px rgba(251,191,36,0.28), 0 0 28px rgba(251,191,36,0.55) !important;
         border-radius: 10px !important;
         pointer-events: auto !important;
@@ -496,7 +496,7 @@
       '  </div>',
       '</div>',
       '<div id="mentor-tour-controls">',
-      '  <button id="mentor-skip" class="mentor-tour-btn">Skip Voice</button>',
+      '  <button id="mentor-skip" class="mentor-tour-btn">Skip</button>',
       '  <button id="mentor-next" class="mentor-tour-btn primary">Next</button>',
       '</div>'
     ].join('');
@@ -924,7 +924,7 @@
       #cq-win-overlay {
         position: fixed;
         inset: 0;
-        z-index: 2147483640;
+        z-index: var(--cq-layer-modal, 400);
         background: rgba(3, 8, 20, 0.88);
         backdrop-filter: blur(6px);
         -webkit-backdrop-filter: blur(6px);

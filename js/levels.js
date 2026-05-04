@@ -977,12 +977,22 @@ document.head.appendChild(style);`,
 
 ];
 
+window.LEVELS = LEVELS;
+
+// Central validators own answer checking. The per-level checkFn entries above are
+// retained only as level metadata compatibility for older scripts.
+LEVELS.forEach(function (level) {
+  level.checkFn = function (code, state) {
+    return !!(window.CQ_VALIDATORS && window.CQ_VALIDATORS.validate(level, code, state).ok);
+  };
+});
+
 /* ─────────────────────────────────────────
    SHARED STATE
    Pre-loaded with a beautiful portfolio so
    the preview always looks great from level 8+
    ───────────────────────────────────────── */
-const STATE = {
+window.CQ_STATE.initDefaults({
   html: `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -1041,4 +1051,6 @@ const STATE = {
   js: `console.log("Portfolio loading...");`,
   userName: 'Your Name',
   completedLevels: []
-};
+});
+const STATE = window.CQ_STATE.data;
+window.STATE = STATE;

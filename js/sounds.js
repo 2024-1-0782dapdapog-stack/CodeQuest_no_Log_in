@@ -6,6 +6,8 @@
 
   let audioContext;
   let bgMusicOscillators = [];
+  let bgMusicLoopTimer = null;
+  let synthMusicPlaying = false;
   let youtubePlayer = null;
   let musicMuted = false;
 
@@ -59,6 +61,7 @@
 
   /* ── Initialize Hidden YouTube Player ── */
   window.initYouTubeMusic = function() {
+    if (musicMuted) return;
     loadYouTubeAPI().then(() => {
       if (!youtubePlayer && window.YT && window.YT.Player) {
         try {
@@ -125,16 +128,24 @@
 
   /* ── Mute/Unmute Background Music ── */
   window.toggleMusicMute = function() {
-    if (!youtubePlayer) return;
-    
     musicMuted = !musicMuted;
-    
+
     if (musicMuted) {
-      youtubePlayer.mute();
+      if (youtubePlayer) {
+        try { youtubePlayer.mute(); } catch (e) {}
+      }
+      stopSynthMusic();
     } else {
-      youtubePlayer.unMute();
+      if (youtubePlayer) {
+        try {
+          youtubePlayer.unMute();
+          youtubePlayer.playVideo();
+        } catch (e) {}
+      } else {
+        playBackgroundMusic();
+      }
     }
-    
+
     return musicMuted;
   };
 
@@ -144,8 +155,10 @@
 
   /* ── Fallback: Synthesized Lo-Fi Music ── */
   window.playBackgroundMusic = function() {
+    if (musicMuted || synthMusicPlaying) return;
     try {
       const ctx = initAudioContext();
+      synthMusicPlaying = true;
 
       const playChord = (frequencies, startTime, duration, volume = 0.25) => {
         frequencies.forEach((freq) => {
@@ -199,7 +212,7 @@
           currentTime += chord.duration;
         });
 
-        setTimeout(scheduleLoop, loopDuration * 1000);
+        bgMusicLoopTimer = setTimeout(scheduleLoop, loopDuration * 1000);
       };
 
       scheduleLoop();
@@ -209,19 +222,28 @@
     }
   };
 
-  window.stopBackgroundMusic = function() {
-    if (youtubePlayer) {
-      try {
-        youtubePlayer.stopVideo();
-      } catch (e) {}
+  function stopSynthMusic() {
+    if (bgMusicLoopTimer) {
+      clearTimeout(bgMusicLoopTimer);
+      bgMusicLoopTimer = null;
     }
-    
+    synthMusicPlaying = false;
     bgMusicOscillators.forEach(osc => {
       try {
         osc.stop();
       } catch (e) {}
     });
     bgMusicOscillators = [];
+  }
+
+  window.stopBackgroundMusic = function() {
+    if (youtubePlayer) {
+      try {
+        youtubePlayer.stopVideo();
+      } catch (e) {}
+    }
+
+    stopSynthMusic();
   };
 
   /* ── Success Chime (ascending) ── */
