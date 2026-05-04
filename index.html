@@ -16,9 +16,11 @@
   <link rel="stylesheet" href="css/auth.css">
   <link rel="stylesheet" href="css/hints.css">
   <link rel="stylesheet" href="css/certificate.css">
+  <link rel="stylesheet" href="css/design-system.css">
+  <link rel="stylesheet" href="css/mobile.css">
 
   <!-- Free TTS Libraries — UNCHANGED -->
-  <script src="https://code.responsivevoice.org/responsivevoice.js?key=default"></script>
+  <script src="https://code.responsivevoice.org/responsivevoice.js?key=default" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
   <script>
     window.responsiveVoiceInit = false;
     if (window.responsiveVoice) {
@@ -27,7 +29,7 @@
       });
     }
   </script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/meSpeak/1.1/meSpeak.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/meSpeak/1.1/meSpeak.js" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
   <script>
     if (window.meSpeak) {
       meSpeak.loadConfig('https://cdnjs.cloudflare.com/ajax/libs/meSpeak/1.1/meSpeak_config.json');
@@ -74,7 +76,7 @@
         <span>Start Learning</span>
         <span class="btn-arrow">→</span>
       </button>
-      <p class="splash-note">No account needed · Progress saves automatically to your browser</p>
+      <p class="splash-note">Sign in locally · Progress saves automatically to your browser</p>
     </div>
   </div>
 
@@ -116,7 +118,7 @@
 
     <header id="topbar">
       <div class="topbar-left">
-        <button id="homeBtn" class="icon-btn" title="Home">⌂</button>
+        <button id="homeBtn" class="icon-btn" title="Home" aria-label="Return to home">⌂</button>
         <span class="logo-small">Code<span>Quest</span></span>
       </div>
       <div id="topbar-center">
@@ -129,7 +131,7 @@
         </div>
       </div>
       <div class="topbar-right">
-        <button id="musicToggleBtn" class="icon-btn" title="Toggle Music (Lo-Fi Girl)">🎵</button>
+        <button id="musicToggleBtn" class="icon-btn" title="Toggle Music (Lo-Fi Girl)" aria-label="Mute music" aria-pressed="false">🎵</button>
         <button id="ttsToggleBtn" class="icon-btn mentor-voice-btn" data-mentor-dialogue title="Mute Mentor Voice" aria-label="Mute Mentor Voice">
           <img data-mentor-portrait src="Pixel Art/Clara/Clara_Icon.png" alt="Selected mentor voice">
           <span class="mentor-voice-mute-indicator" aria-hidden="true">🔇</span>
@@ -222,7 +224,7 @@
           </div>
         </div>
         <div id="preview-content">
-          <iframe id="preview-frame" sandbox="allow-scripts"></iframe>
+          <iframe id="preview-frame" title="Live code preview" sandbox="allow-scripts"></iframe>
           <pre id="html-view" class="code-view hidden"></pre>
           <pre id="css-view" class="code-view hidden"></pre>
           <pre id="js-view" class="code-view hidden"></pre>
@@ -246,8 +248,8 @@
             </div>
           </div>
           <div class="ai-panel-actions">
-            <button id="ai-mute-btn" class="ai-panel-btn" type="button" title="Mute AI voice">🔊</button>
-            <button id="ai-close-btn" class="ai-panel-btn" type="button" title="Close AI helper">✕</button>
+            <button id="ai-mute-btn" class="ai-panel-btn" type="button" title="Mute AI voice" aria-label="Mute AI voice">🔊</button>
+            <button id="ai-close-btn" class="ai-panel-btn" type="button" title="Close AI helper" aria-label="Close AI helper">✕</button>
           </div>
         </header>
         <div id="ai-messages" class="ai-messages" aria-live="polite"></div>
@@ -293,6 +295,8 @@
   </div>
 
   <!-- ===== SCRIPTS — UNCHANGED ORDER ===== -->
+  <script src="js/state.js"></script>
+  <script src="js/storage.js"></script>
   <script src="js/auth.js"></script>
   <script src="js/sounds.js"></script>
   <script src="js/animations.js"></script>
@@ -302,6 +306,8 @@
   <script src="js/tutorial-data.js"></script>
   <script src="js/tutorial.js"></script>
   <script src="js/levels.js"></script>
+  <script src="js/quests.js"></script>
+  <script src="js/validators.js"></script>
   <script src="js/editor.js"></script>
   <script src="js/game.js"></script>
   <script src="js/hints.js"></script>
