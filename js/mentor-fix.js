@@ -14,11 +14,11 @@
       sad: 'Pixel Art/Client/Client_Sad.png',
       talking: 'Pixel Art/Client/Client_Talking.png'
     },
-    kenji: {
-      icon: 'Pixel Art/Kenji/Kenji_Icon.png',
-      happy: 'Pixel Art/Kenji/Kenji_Happy.png',
-      sad: 'Pixel Art/Kenji/Kenji_Sad.png',
-      talking: 'Pixel Art/Kenji/Kenji_Talking.png'
+    kenjie: {
+      icon: 'Pixel Art/Kenjie/Kenjie_Icon.png',
+      happy: 'Pixel Art/Kenjie/Kenjie_Happy.png',
+      sad: 'Pixel Art/Kenjie/Kenjie_Sad.png',
+      talking: 'Pixel Art/Kenjie/Kenjie_Talking.png'
     },
     scarlet: {
       icon: 'Pixel Art/Scarlet/Scarlet_Icon.png',

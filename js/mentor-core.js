@@ -33,7 +33,7 @@
   }
 
   const FEMALE_MARKERS = ['female', 'woman', 'girl', 'zira', 'samantha', 'jenny', 'aria', 'serena', 'victoria', 'amy', 'fiona', 'hazel', 'emma', 'luna', 'sara', 'olivia', 'joanna', 'kendra', 'kimberly', 'ivy', 'mia', 'nicole', 'eva', 'haruka', 'heami', 'huihui', 'yaoyao', 'ayumi', 'ingrid', 'helene', 'caroline', 'maria', 'elsa', 'katja', 'allison', 'susan', 'michelle', 'heather', 'linda', 'nancy', 'roz', 'asja', 'paulina', 'nuntiya', 'suthinan', 'elena', 'irina', 'hortense', 'sabina', 'ivona', 'lucy', 'megan', 'amy2'];
-  const MALE_MARKERS = ['male', 'man', 'boy', 'david', 'guy', 'alex', 'daniel', 'ryan', 'takumi', 'jun', 'kenji', 'ichiro', 'hiro', 'mark', 'brian', 'george', 'james', 'john', 'matthew', 'justin', 'joey', 'arthur'];
+  const MALE_MARKERS = ['male', 'man', 'boy', 'david', 'guy', 'alex', 'daniel', 'ryan', 'takumi', 'jun', 'kenjie', 'ichiro', 'hiro', 'mark', 'brian', 'george', 'james', 'john', 'matthew', 'justin', 'joey', 'arthur'];
 
   function voiceName(voice) {
     return ((voice && voice.name) || '').toLowerCase();
@@ -243,16 +243,16 @@
     const assignedKeys = mentorIds.map((id) => state.voiceAssignments[id]).filter(Boolean);
     const hasAllAssigned = assignedKeys.length === mentorIds.length;
     const hasFemalePairDistinct = !state.voiceAssignments.clara || !state.voiceAssignments.scarlet || state.voiceAssignments.clara !== state.voiceAssignments.scarlet;
-    const hasMalePairDistinct = !state.voiceAssignments.client || !state.voiceAssignments.kenji || state.voiceAssignments.client !== state.voiceAssignments.kenji;
+    const hasMalePairDistinct = !state.voiceAssignments.client || !state.voiceAssignments.kenjie || state.voiceAssignments.client !== state.voiceAssignments.kenjie;
     const keyToVoice = Object.fromEntries(state.voices.map((voice) => [voiceKey(voice), voice]));
     const femaleHasNonMaleOption = state.voices.some((voice) => !isMaleCodedVoice(voice));
     const maleHasNonFemaleOption = state.voices.some((voice) => !isFemaleCodedVoice(voice));
     const claraVoice = keyToVoice[state.voiceAssignments.clara || ''];
     const scarletVoice = keyToVoice[state.voiceAssignments.scarlet || ''];
     const clientVoice = keyToVoice[state.voiceAssignments.client || ''];
-    const kenjiVoice = keyToVoice[state.voiceAssignments.kenji || ''];
+    const kenjieVoice = keyToVoice[state.voiceAssignments.kenjie || ''];
     const femalePairGenderSafe = !femaleHasNonMaleOption || ((!claraVoice || !isMaleCodedVoice(claraVoice)) && (!scarletVoice || !isMaleCodedVoice(scarletVoice)));
-    const malePairGenderSafe = !maleHasNonFemaleOption || ((!clientVoice || !isFemaleCodedVoice(clientVoice)) && (!kenjiVoice || !isFemaleCodedVoice(kenjiVoice)));
+    const malePairGenderSafe = !maleHasNonFemaleOption || ((!clientVoice || !isFemaleCodedVoice(clientVoice)) && (!kenjieVoice || !isFemaleCodedVoice(kenjieVoice)));
     const femaleCodedPoolForCheck = state.voices.filter((voice) => isFemaleCodedVoice(voice) && !isMaleCodedVoice(voice));
     const nonMalePoolForCheck = state.voices.filter((voice) => !isMaleCodedVoice(voice));
     const maleCodedPoolForCheck = state.voices.filter((voice) => isMaleCodedVoice(voice) && !isFemaleCodedVoice(voice));
@@ -312,7 +312,7 @@
       const blockedKeys = new Set([
         state.voiceAssignments.clara,
         state.voiceAssignments.client,
-        state.voiceAssignments.kenji
+        state.voiceAssignments.kenjie
       ].filter(Boolean));
 
       const scarletPreferredGroups = Array.isArray(profile.preferredVoiceHintGroups)
@@ -461,7 +461,7 @@
       const blockedKeys = new Set([
         state.voiceAssignments.clara,
         state.voiceAssignments.client,
-        state.voiceAssignments.kenji
+        state.voiceAssignments.kenjie
       ].filter(Boolean));
       
       // Find any female voice not used by other mentors

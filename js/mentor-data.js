@@ -66,13 +66,13 @@
       talking: 'Pixel Art/Client/Client_Talking.png'
     },
     {
-      id: 'kenji',
-      label: 'Kenji',
+      id: 'kenjie',
+      label: 'Kenjie',
       gender: 'male',
-      voiceHints: ['kenji', 'takumi', 'jun', 'ichiro', 'hiro', 'male', 'japan'],
+      voiceHints: ['kenjie', 'takumi', 'jun', 'ichiro', 'hiro', 'male', 'japan'],
       preferredVoiceHintGroups: [
         ['takumi'],
-        ['kenji'],
+        ['kenjie'],
         ['jun'],
         ['ichiro'],
         ['hiro']
@@ -80,11 +80,11 @@
       langHints: ['ja', 'en-us'],
       rate: 0.92,
       pitch: 0.97,
-      intro: "Hi, I'm Kenji. I'll keep things steady and calm while you build confidence.",
-      icon: 'Pixel Art/Kenji/Kenji_Icon.png',
-      happy: 'Pixel Art/Kenji/Kenji_Happy.png',
-      sad: 'Pixel Art/Kenji/Kenji_Sad.png',
-      talking: 'Pixel Art/Kenji/Kenji_Talking.png'
+      intro: "Hi, I'm Kenjie. I'll keep things steady and calm while you build confidence.",
+      icon: 'Pixel Art/Kenjie/Kenjie_Icon.png',
+      happy: 'Pixel Art/Kenjie/Kenjie_Happy.png',
+      sad: 'Pixel Art/Kenjie/Kenjie_Sad.png',
+      talking: 'Pixel Art/Kenjie/Kenjie_Talking.png'
     },
     {
       id: 'scarlet',
